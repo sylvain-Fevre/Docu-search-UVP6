@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://uvp6-finds.hydroptic.com/$1",
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "uvp6-manual.hydroptic.com"
+        }
+      ]
+    }
+  ]
+}
