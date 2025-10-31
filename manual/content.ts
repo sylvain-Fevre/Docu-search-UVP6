@@ -2,10 +2,6 @@
 // INSTRUCTION IMPORTANTE
 // =======================================================================
 // Copiez et collez ici le contenu COMPLET de votre manuel technique.
-// Le texte doit être au format brut (plain text).
-// Vous pouvez convertir votre PDF ou DOCX en texte brut en utilisant
-// un convertisseur en ligne ou en faisant un copier-coller.
-// Remplacez simplement le texte d'exemple ci-dessous par le vôtre.
 // =======================================================================
 export const manualContent = String.raw`
 Guide for UVP6 And UVPapp piloting application.
@@ -4418,7 +4414,3937 @@ SD card remaining memory at the start of the acquisition 383008
 
 27
 
+###################################################
+## FIN DOCUMENT 4
+###################################################
 
+// =======================================================================
+// AJOUT DU cinquième MANUEL
+// =======================================================================
+###################################################
+## DEBUT DOCUMENT 5 : UVP6 Argo Data Management
+###################################################
+
+Argo data management
+DOI: http://dx.doi.org/10.13155/99280
+
+Processing BGC-Argo
+particles and plankton in the
+aux directory at the Coriolis
+DAC
+Version 2.6
+February 2024, 1
+
+Argo data management
+Processing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+Authors: Camille Catalano, Catherine Schmechtig, Edouard Leymarie, Laura Picheral and Marc Picheral
+How to cite this document:
+Camille Catalano, Catherine Schmechtig, Edouard Leymarie, Laura Picheral and Marc Picheral (2024).
+Processing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC.
+http://dx.doi.org/10.13155/99280
+
+3
+
+Table of contents
+1. INTRODUCTION ..................................................................................................................... 6
+2. HOW DOES UVP6 WORKS....................................................................................................... 6
+3. UVP6 DATA PROCESSING ....................................................................................................... 7
+3.1. COMPUTED CONCENTRATIONS.................................................................................................... 7
+3.2. COMPUTED BIOVOLUME ........................................................................................................... 8
+3.3. ONE-PIXEL SIZE OBJECTS............................................................................................................ 8
+3.4. SUN LIGHT IMPACT QUALITY CONTROL .......................................................................................... 8
+3.5. PRESSURE OFFSET .................................................................................................................... 8
+3.6. TAXONOMIC CLASSES ............................................................................................................... 8
+4. DESCRIPTION OF DAC METADATA AND DATA ......................................................................... 9
+4.1. METADATA............................................................................................................................ 9
+4.1.1. TAXONOMIC CLASSES ....................................................................................................................... 9
+4.1.2. SENSOR METADATA ....................................................................................................................... 10
+4.1.3. CONFIGURATION PARAMETERS RELATIVE TO HARDWARE (VERSION > 2022.01) ...................................... 10
+4.1.4. CONFIGURATION PARAMETERS (PER ACQUISITION ZONE) RELATIVE TO ACQUISITION (VERSION > 2022.01) . 12
+4.1.5. CONFIGURATION PARAMETERS FOR PARKING DRIFT PHASE RELATIVE TO ACQUISITION (VERSION > 2022.01) 13
+4.1.6. CONFIGURATION PARAMETERS (PER ACQUISITION ZONE) RELATIVE TO TAXONOMIC CLASSIFICATION (VERSION >
+2022.01)................................................................................................................................................. 15
+4.1.7. CONFIGURATION PARAMETERS FOR PARKING DRIFT PHASE RELATIVE TO TAXONOMIC CLASSIFICATION (VERSION
+> 2022.01) .............................................................................................................................................. 16
+4.2. LARGE PARTICULATE MATTER DATA............................................................................................ 16
+4.3. BLACK MEASUREMENT DATA .................................................................................................... 17
+4.4. TAXONOMIC DATA (IDENTIFICATION) ......................................................................................... 18
+4.5. DAC PROCESSED DATA ........................................................................................................... 19
+5. CHANGES FROM OLDER VERSIONS ....................................................................................... 19
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+4
+
+5.1. UVP6 VERSION 2022.01........................................................................................................ 19
+5.1.1. CONFIGURATION PARAMETERS RELATIVE TO HARDWARE:..................................................................... 19
+5.1.2. CONFIGURATION PARAMETERS (PER ACQUISITION ZONE) RELATIVE TO ACQUISITION: ................................ 21
+5.1.3. CONFIGURATION PARAMETERS FOR PARKING DRIFT PHASE RELATIVE TO ACQUISITION: .............................. 23
+5.2. UVP6 VERSION 2021 AND OLDER ............................................................................................. 24
+5.2.1. CONFIGURATION PARAMETERS RELATIVE TO HARDWARE : .................................................................... 24
+5.2.2. CONFIGURATION PARAMETERS (PER ACQUISITION ZONE) RELATIVE TO ACQUISITION: ................................ 26
+5.2.3. CONFIGURATION PARAMETERS FOR PARKING DRIFT PHASE RELATIVE TO ACQUISITION: .............................. 28
+5.2.4. PARTICLES DATA AT DAC LEVEL ....................................................................................................... 29
+6. REFERENCES ........................................................................................................................ 30
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+5
+
+History of the document
+Version
+1.0
+
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+6
+
+Preamble
+This document does not address the issue of quality control (either real-time or delayed mode) for the
+size and abundance of the particulate matter and plankton. As a preliminary step towards that goal,
+this document seeks to ensure that all countries deploying floats equipped with UVP6 sensors
+document the data and metadata related to these floats properly.
+
+1. Introduction
+The only method used to date to measure the size and abundance of the Large Particulate Matter
+(LPM) and zooplankton with sensors mounted on profiling floats is based on imagery.
+The only instrument that can be fixed on the outside of a profiling float and connected to ensure power
+and communication is the UVP6-LP. It is a miniaturization of the UVP5 marketed since 2008, whose
+data are gathered into the EcoPART database.
+The purpose of this document is to introduce the measures provided by the sensor and their postprocessing.
+
+2. How does UVP6 works
+The UVP6 is a 5Mp digital camera-based instrument. It makes images at a fixed distance from the
+porthole in a well collimated perpendicular light beam.
+The instrument encompasses a specific camera and light which allows high performance using very
+low power.
+The light is produced by a 630 nm flashing laser diode synchronized with the camera. The diode current
+is regulated to compensate the variations of the seawater temperature.
+The camera contains a very low power supervising processor which monitors the system status and
+communicates with the float. The float selects the proper UVP configuration and triggers the
+acquisition of the images by sending the pressure and time information. When triggered, the
+supervising processor activates the processing unit to acquire the image. It then processes it to provide
+data on each object in the imaged volume. The instrument optionally sorts the larger objects in up to
+40 categories using its internal algorithms.
+The power required by the instrument is directly correlated with the frequency of the image
+acquisition. The supervising processor drains less than 20mW. The image acquisition and process
+require less than 800mW during approximately 0.7 second. The maximum image frequency is thus
+1/0.7 Hz.
+The instrument transmits its essential metadata when powered and also on purpose when queried by
+the float.
+Thanks to its internal calibration factors Aa and Exp, the instrument converts individual object sizes in
+pixels into scientific units using the equation:
+Areamm² = ( Aa x Areapixels ^EXP ) / 1000000
+ESDmm = 2 x ( Areamm² / PI ) ^0.5
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+7
+
+Areapixels = measured area after segmentation using the threshold (#pixel)
+Areamm² = measured area converted (mm²)
+ESDmm = equivalent spherical diameter (mm)
+The instrument also regularly processes images acquired without light activation in order to measure
+the internal noise and the possible sun light perturbation in the surface layers.
+The synthetic data issued by the image processor are returned to the supervising processor and
+transferred to the float along with metadata while raw data and images of identified objects are
+recorded in the 400 Gb memory of the instrument in case of recovery.
+These data are:
+•
+•
+•
+•
+•
+•
+
+Counts of noise in 5 classes.
+Counts of particles in 18 classes ranging from 50.6 µm to more than 2.5 mm.
+Mean grey level of the particles sorted in the 18 classes
+Counts of objects classified in up to 40 categories
+Mean volume of objects classified in up to 40 categories
+Grey level of objects classified in up to 40 categories
+
+The metadata and profile data are processed by the float to provide summed results per pressure
+slices.
+The parking data are averaged by time.
+The instrument is internally parametrized using a metadata internal table (for calibration and sensor
+reference) and up to 10 acquisition tables to set the image acquisition parameters. These tables are
+standardized for float operations and loaded prior to deployment. The float can select the table
+according to its dive programming.
+The instrument is more detailed in Picheral et al. 2022.
+
+3. UVP6 data processing
+3.1.
+
+Computed concentrations
+
+The concentrations of LPM and TAXO data are computed at the DAC level from the slice particles and
+objects count (NB_SIZE_SPECTRA_PARTICLES and NB_OBJECTS_CATEGORY), the number of images in
+the slice (NB_IMAGE_PARTICLES and NB_IMAGE_CATEGORY ) and the imaged volume
+CONFIG_UvpImageVolume_L. The results are concentration in #/L.
+CONCENTRATION_LPM (#/L) = NB_SIZE_SPECTRA_PARTICLES / ( NB_IMAGE_PARTICLES *
+CONFIG_UvpImageVolume_L )
+CONCENTRATION_CATEGORY (#/L) = NB_OBJECT_CATEGORY / ( NB_IMAGE_CATEGORY *
+CONFIG_UvpImageVolume_L )
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+8
+
+3.2.
+
+Computed biovolume
+
+The biovolumes of TAXO data are computed at the DAC level from the slice concentrations of TAXO
+data (CONCENTRATION_CATEGORY), the average volume of objects in the slice and the uncalibrated
+pixel size. The result is in µm^3/mL.
+BIOVOLUME_CATEGORY (µm^3/mL) = CONCENTRATION_CATEGORY *
+OBJECT_MEAN_VOLUME_CATEGORY * Pixel_Size^3 / 1000
+
+3.3.
+
+One-pixel size objects
+
+Data about objects with a size of one pixel (class 1) is also transmitted but is very noisy. The signal-tonoise ratio S/N is most of the time far less that one. The noise is mostly from the instrument, can be
+variable and so is difficult to subtract.
+It is strongly not recommended to use this data. It will be utilized to monitor the S/N, for sun light
+impact for example.
+
+3.4.
+
+Sun light impact quality control
+
+The data might be polluted by external light, like the sun when the instrument is close to the surface.
+The black data can be used to check the LPM data and to detect the usable pressure range where using
+the LPM and TAXO data.
+The second class of BLACK_NB_SIZE_SPECTRA_PARTICLESis analyzed to identify the inflexion of the
+vertical profile which indicate the limit of the sun light perturbation. Polluted data should be removed.
+
+3.5.
+
+Pressure offset
+
+Depending on where the sensor is mounted on the float, the UVP6 and the CTD are not sampling the
+same water. This distance between the CTD pressure sensor and the UVP6 imaged field is reported in
+the METADATA and permits to adjust the pressure indicated in the data vectors.
+The CONFIG_UvpVerticalPressureOffset_dbar variable from the hardware metadata gives this offset
+to apply to the data pressure.
+PRES_ ADJUSTED = PRES - CONFIG_UvpVerticalPressureOffset_dbar
+
+3.6.
+
+Taxonomic classes
+
+The taxonomic classes are defined by the taxonomic metadata. For each class an Ecotaxa ID is given.
+The identified taxonomic class corresponds to this Ecotaxa ID and some of the children classes
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+9
+
+(https://ecotaxa.obs-vlfr.fr/api/docs#/Taxonomy%20Tree/query_taxa). Precisions can be found in the
+Ricour F. (2023).
+
+4. Description of DAC metadata and data
+The sensor provides metadata and data that are transmitted by the float. They are sorted in four
+vectors. The tree last ones are function of pressure:
+•
+•
+•
+•
+
+Metadata
+Black data (i.e. noise)
+Large Particulate data
+Taxonomic data
+
+In addition, there is also the data processed at DAC level.
+
+4.1.
+
+Metadata
+
+Each sensor is individually calibrated by the manufacturer and each instrument goes along with a
+calibration file. A UVP web database (http://uvpdb.ecotaxa.org/app/login.php) stores all sensor
+information including calibrations which are freely available.
+The metadata are transmitted by the float at the beginning of each mission and are archived along
+with the data, because they are absolutely necessary for the process of the concentrations from the
+transmitted counts.
+The metadata are used by the instrument to define the acquisition parameters and to internally
+process the measurements.
+The use of the metadata is described in the data processing section of this document.
+Crucial configuration metadata parameters are highlighted in bold in the following tables.
+The instrument metadata are spread in one Hardware table, ten Acquisition tables and twoTaxonomic
+tables. The float piloting application permits to select one of the ten Acquisition table for each of the
+depth zone. An acquisition table can point to one of the Taxonomic tables.
+4.1.1. Taxonomic classes
+The taxonomic classes configured in the float are provided within the following parameters (see
+https://ecotaxa.obs-vlfr.fr/api/docs#/Taxonomy%20Tree/query_taxa).
+ARGO NAME
+
+Type
+
+Explanation
+
+text
+
+Coma separated list of ECOTAXA taxon names managed in the
+current file
+
+text
+
+Coma separated list of ECOTAXA taxon Ids managed in the
+current file
+
+UVP_ECOTAXA_NAMES
+
+UVP_ECOTAXA_IDS
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+10
+
+4.1.2. Sensor metadata
+UVP6 NAME
+
+ARGO NAME
+
+Type
+
+Explanation
+
+Camera_ref
+
+SENSOR_SERIAL_NO Text
+
+Sensor serial number (XXXXXXLP)
+
+SENSOR
+
+Text
+
+PARTICLES_PLANKTON_CAMERA
+
+SENSOR_MAKER
+
+Text
+
+HYDROPTIC
+
+SENSOR_MODEL
+
+Text
+
+UVP6-LP
+
+4.1.3. Configuration parameters relative to hardware (version > 2022.01)
+UVP6 NAME
+
+Acquisition_mode
+
+Default_acquisition_c
+onfiguration
+
+ARGO NAME
+
+CONFIG_UvpAcquisitionMode_NUMBER
+
+CONFIG_UvpAcquisitionModeDefault
+
+Type
+
+Units
+
+Explanation
+
+integer
+
+0: SUPERVISED mode, 1:
+AUTONOMOUS
+mode
+(including CTD mode), 2: TIMEprogrammed mode
+
+text
+
+Name of the acquisition
+configuration
+automatically
+launched
+when
+Acquisition_mode = 1
+Optional delay before starting
+image
+acquisition
+when
+Acquisition_mode
+=
+1
+(AUTONOMOUS)
+
+Delay_after_power_u
+p_on_time_mode
+
+CONFIG_UvpDelayPowerModeTime_minu
+tes
+
+integer
+
+Light_ref
+
+CONFIG_UvpLightSn
+
+text
+
+Light unit serial number
+
+integer
+
+Selection of the lighting
+correction LUT -> 0: no
+correction, 1: light unit
+correction #1, 2: light unit
+correction #2 (default : 1)
+Delay between light unit
+trigger and image sensor
+shutter
+
+minute
+
+Correction_table_acti
+vation
+
+CONFIG_UvpCorrectionTableActivation_N
+UMBER
+
+Time_between_lightin
+g_trigger_and_acquisi
+tion
+
+CONFIG_UvpLightTriggerAcquisitionTime_
+usec
+
+integer
+
+Pressure_sensor_ref
+
+CONFIG_UvpPresSn
+
+text
+
+Pressure sensor serial number
+(empty if no sensor installed)
+Vertical distance between the
+image plan and the pressure
+measurement point ( >0 if
+pressure sensor above image
+field, if undefined, set 999)
+
+µS
+
+Pressure_offset
+
+CONFIG_UvpVerticalPressureOffset_dbar
+
+float
+
+dbar
+
+Storage_capacity
+
+CONFIG_UvpStorageCapacity_Mbyte
+
+integer
+
+MB
+
+SD card storage capacity,
+automatically updated by
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+11
+
+UVP6 when parameters are
+modified, do not edit
+Minimum_remaining_
+memory_for_thumbn
+ail_saving
+
+Baud_Rate
+
+CONFIG_UvpMinSecuredForThumbSaving
+Capacity_Mbyte
+
+CONFIG_UvpBaudRateCode_NUMBER
+
+integer
+
+MB
+
+Minimal memory remaining in
+the SD card to keep saving
+images or vignettes, do not edit
+UVP6 RS232 baud rate
+selection -> 0: 9600 bauds, 1:
+19200 bauds, 2: 38400 bauds
+
+integer
+
+Black_level
+
+CONFIG_UvpBlackLevel_NUMBER
+
+integer
+
+12 bits
+gray
+level
+
+Shutter
+
+CONFIG_UvpShutter_usec
+
+integer
+
+µS
+
+Image sensor integration time
+(shutter)
+
+Gain
+
+CONFIG_UvpGain_dB
+
+integer
+
+dB
+
+Image sensor gain, do not edit
+
+integer
+
+8 bits
+gray
+scale
+
+Threshold
+for
+image
+segmentation
+(pixels
+<=
+Threshold are considered
+background)
+
+µM²
+
+Calibration
+parameter
+(corresponding area in the
+scene represented by each
+pixel)
+
+Threshold
+
+Aa
+
+CONFIG_UvpThreshold_NUMBER
+
+CONFIG_UvpSizeToPixelsConversionAa_u
+m^2
+
+integer
+
+Image sensor
+parameter
+
+Calibration
+(adjusting
+reflections)
+
+for
+
+black
+
+level
+
+parameter
+specular
+
+Exp
+
+CONFIG_UvpSizeToPixelsConversionExp
+
+float
+
+Pixel_Size
+
+CONFIG_UvpPixelSize_um
+
+integer
+
+µM
+
+Uncalibrated pixel size (side of
+the pixel in the image field)
+
+Image_volume
+
+CONFIG_UvpImageVolume_L
+
+float
+
+L
+
+Image volume
+
+Calibration_date
+
+CONFIG_UvpCalibrationDate_YYYYMMDD
+HHMM
+
+date
+
+YYYYM
+MDDH
+HMM
+
+Calibration date for the values
+in this table
+
+Last_parameters_mod
+ification
+
+CONFIG_UvpLastUpdateConfigDate_YYYY
+MMDDHHMM
+
+date
+
+YYYYM
+MDDH
+HMM
+
+Automatically updated by
+UVP6
+when
+hardware
+parameters are modified
+
+Operator_email
+
+CONFIG_UvpHardwareEmail
+
+text
+
+email
+
+Identification of the operator
+filling this configuration table
+
+Min_esd_class_01
+
+CONFIG_UvpMinEsdClass01_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 01
+
+Min_esd_class_02
+
+CONFIG_UvpMinEsdClass02_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 02
+
+…
+
+…
+
+…
+
+…
+
+…
+
+Min_esd_class_17
+
+CONFIG_UvpMinEsdClass17_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 17
+
+Min_esd_class_18
+
+CONFIG_UvpMinEsdClass18_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 18
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+12
+
+Firmware_version
+
+UVP_FIRMWARE_VERSION
+
+text
+
+verYYY
+Y.nn
+
+Firmware version : prefix, year
+and no
+
+4.1.4. Configuration parameters (per acquisition zone) relative to acquisition (version >
+2022.01)
+UVP6
+NAME
+
+Configuration_name
+
+ARGO NAME
+
+Type
+
+Units
+
+Explanation
+
+CONFIG_UvpDepthZone<N>AcqConfNam
+e
+
+text
+
+Name used to launch this
+configuration
+0: Triggered by vector, 1: Asks
+for pressure and time, 2: Use
+UVP6 Acquisition_frequency,
+3: CTD mode (mandatory
+Pressure Sensor)
+
+PT_mode
+
+CONFIG_UvpDepthZone<N>PtMode_NU
+MBER
+
+integer
+
+Acquisition_frequency
+
+CONFIG_UvpDepthZone<N>SampleRateM
+ax_hertz
+
+float
+
+Hz
+
+Acquisition
+(maximum value)
+
+Frames_per_bloc
+
+CONFIG_UvpDepthZone<N>FramesPerBl
+oc_NUMBER
+
+integer
+
+frame
+
+Nb of frames to accumulate
+and synthesize to send
+
+dbar
+
+When in CTD mode (PT_mode=
+3),
+pressure
+value
+to
+automatically
+start
+the
+acquisition
+
+dbar
+
+When in CTD mode (PT_mode=
+3), pressure drop from deepest
+value to automatically stop the
+acquisition
+
+Pressure_for_auto_st
+art
+
+Pressure_difference_f
+or_auto_stop
+
+Result_sending
+
+CONFIG_UvpDepthZone<N>PressureAuto
+Start_dbar
+
+CONFIG_UvpDepthZone<N>PressureAuto
+Stop_dbar
+
+CONFIG_UvpDepthZone<N>ResultSending
+_LOGICAL
+
+Save_synthetic_data_f
+or_delayed_request
+
+CONFIG_UvpDepthZone<N>SyntheticData
+Saving_LOGICAL
+
+Save_images
+
+CONFIG_UvpDepthZone<N>SavingImages
+_NUMBER
+
+Vignetting_lower_limi
+t_size
+
+Appendices_ratio
+
+CONFIG_UvpDepthZone<N>MinVignettin
+gLimitESD_um
+
+CONFIG_UvpDepthZone<N>AppendicesRa
+tio
+
+integer
+
+integer
+
+frequency
+
+boolean
+
+0/false: results are never sent 1/true: synthesized results are
+sent through RS232 after each
+bloc
+
+boolean
+
+0/false: do not save - 1/true:
+save synthetic data for a
+potential delayed request
+(useful
+only
+for
+troubleshooting)
+
+integer
+
+How to save Images -> 0: don't
+save, 1: save whole raw image,
+2: save selected vignettes only
+
+integer
+
+When saving vignettes (Save
+images= 2), minimum object
+size (ESD) to save vignette,
+utilizes Aa and Exp, (default :
+645)
+
+float
+
+µM
+
+When saving vignettes (Save
+images= 2), vignette size to
+actual object size ratio (default
+: 1.5)
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+13
+
+Interval_for_measuri
+ng_background_noise
+
+CONFIG_UvpDepthZone<N>BackgroundN
+oiseBloc_NUMBER
+
+Image_nb_for_smoot
+hing
+
+CONFIG_UvpDepthZone<N>FrameNumbe
+rForSmoothing_NUMBER
+
+Analog_output_activa
+tion
+
+CONFIG_UvpDepthZone<N>AnalogOutput
+_LOGICAL
+
+Gain_for_analog_out
+
+CONFIG_UvpDepthZone<N>AnalogOutput
+Gain_NUMBER
+
+Maximal_internal_te
+mperature
+
+CONFIG_UvpDepthZone<N>Temperature
+Max_degC
+
+Operator_email
+
+CONFIG_UvpDepthZone<N>ConfigAcqEm
+ail
+
+Aux_mode
+
+CONFIG_UvpDepthZone<N>AuxOutputM
+ode_NUMBER
+
+Aux_param_1
+
+CONFIG_UvpDepthZone<N>AuxOutputSta
+rtDuration_seconds
+
+Aux_param_2
+
+CONFIG_UvpDepthZone<N>AuxOutputEn
+dDuration_seconds
+
+integer
+
+integer
+
+bloc
+
+Background noise measured
+every 'interval' (bloc acquired
+without flashing). Disabled if
+zero
+
+frame
+
+Nb of images to measure
+temperature (for safety stop)
+and
+average
+particle
+abundance for the analog
+output
+
+boolean
+
+Activation of the particle
+abundance analog output :
+0/false: disabled - 1/true
+
+integer
+
+object
+
+Smoothed number of counted
+objects for 5 volts analog
+output voltage
+
+integer
+
+°C
+
+Maximum
+temperature
+security stop
+
+text
+
+email
+
+Identification of the operator
+filling this configuration table
+
+integer
+
+to
+
+internal
+cause a
+
+Auxiliary output activation
+mode (0 : disabled, 1 : enabled
+all sequence, 2 : enabled during
+Aux_param_1 at the start of
+the acquisition and before the
+start of the sequence, during
+Aux_param_2
+after
+the
+sequence and before the end
+of the acquisition and 3 :
+enabled and no image
+processed
+during
+the
+sequence)
+
+integer
+
+second
+e
+
+Duration of activation for
+mode 2 at the start of the
+acquisition
+
+integer
+
+second
+e
+
+Duration of activation for
+mode 2 at the end of the
+acquisition
+
+Taxo_conf
+
+CONFIG_UvpDepthZone<N>TaxoTable
+
+text
+
+Remaining_memory
+
+CONFIG_UvpDepthZone<N>RemainingMe
+mory_Mbyte
+
+integer
+
+Taxonomic
+classification
+configuration
+for
+this
+acquisition (“NO_RE” when
+embedded recognition is
+disabled)
+
+MB
+
+SD card remaining memory at
+the start of the acquisition
+
+4.1.5. Configuration parameters for parking drift phase relative to acquisition (version >
+2022.01)
+UVP6
+NAME
+
+ARGO NAME
+
+Type
+
+Units
+
+Explanation
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+14
+
+Configuration_name
+
+CONFIG_UvpParkDriftPhaseAcqConfName
+
+text
+
+Name used to launch this
+configuration
+0: Triggered by vector, 1: Asks
+for pressure and time, 2: Use
+UVP6 Acquisition frequency, 3:
+CTD
+mode
+(mandatory
+Pressure Sensor)
+
+PT_mode
+
+CONFIG_UvpParkDriftPhasePtMode_NUM
+BER
+
+integer
+
+Acquisition_frequency
+
+CONFIG_UvpParkDriftPhaseSampleRateM
+ax_hertz
+
+float
+
+Hz
+
+Acquisition
+(maximum value)
+
+Frames_per_bloc
+
+CONFIG_UvpParkDriftPhaseFramesPerBl
+oc_NUMBER
+
+integer
+
+frame
+
+Nb of frames to accumulate
+and synthesize to send
+
+dbar
+
+When in CTD mode (PT_mode=
+3),
+pressure
+value
+to
+automatically
+start
+the
+acquisition
+
+dbar
+
+When in CTD mode (PT_mode=
+3), pressure drop from deepest
+value to automatically stop the
+acquisition
+
+Pressure_for_auto_st
+art
+
+Pressure_difference_f
+or_auto_stop
+
+Result_sending
+
+CONFIG_UvpParkDriftPhasePressureAuto
+Start_dbar
+
+CONFIG_UvpParkDriftPhasePressureAuto
+Stop_dbar
+
+CONFIG_UvpParkDriftPhaseResultSending
+_LOGICAL
+
+Save_synthetic_data_f
+or_delayed_request
+
+CONFIG_UvpParkDriftPhaseSyntheticData
+Saving_LOGICAL
+
+Save_images
+
+CONFIG_UvpParkDriftPhaseSavingImages
+_NUMBER
+
+Vignetting_lower_limi
+t_size
+
+Appendices_ratio
+
+Interval_for_measurin
+g_background_noise
+
+CONFIG_UvpParkDriftPhaseMinVignetting
+LimitESD_um
+
+CONFIG_UvpParkDriftPhaseAppendicesRa
+tio
+
+CONFIG_UvpParkDriftPhaseBackgroundN
+oiseBloc_NUMBER
+
+Image_nb_for_smoot
+hing
+
+CONFIG_UvpParkDriftPhaseFrameNumbe
+rForSmoothing_NUMBER
+
+Analog_output_activa
+tion
+
+CONFIG_UvpParkDriftPhaseAnalogOutput
+_LOGICAL
+
+integer
+
+integer
+
+frequency
+
+boolean
+
+0/false: results are never sent 1/true: synthesized results are
+sent through RS232 after each
+bloc
+
+boolean
+
+0/false: do not save - 1/true:
+save synthetic data for a
+potential delayed request
+(useful
+only
+for
+troubleshooting)
+
+integer
+
+How to save Images -> 0: don't
+save, 1: save whole raw image,
+2: save selected vignettes only
+
+integer
+
+When saving vignettes (Save
+images= 2), minimum object
+size (ESD) to save vignette,
+utilizes Aa and Exp, (default :
+645)
+
+µM
+
+float
+
+When saving vignettes (Save
+images= 2), vignette size to
+actual object size ratio (default
+: 1.5)
+
+integer
+
+bloc
+
+Background noise measured
+every 'interval' (bloc acquired
+without flashing). Disabled if
+zero
+
+frame
+
+Nb of images to measure
+temperature (for safety stop)
+and
+average
+particle
+abundance for the analog
+output
+
+integer
+
+boolean
+
+Activation of the particle
+abundance analog output :
+0/false: disabled - 1/true
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+15
+
+Gain_for_analog_out
+
+CONFIG_UvpParkDriftPhaseAnalogOutput
+Gain_NUMBER
+
+Maximal_internal_te
+mperature
+
+CONFIG_UvpParkDriftPhaseTemperature
+Max_degC
+
+Operator_email
+
+CONFIG_UvpParkDriftPhaseConfigAcqEma
+il
+
+Aux_mode
+
+CONFIG_UvpParkDriftPhaseAuxOutputMo
+de_NUMBER
+
+Aux_param_1
+
+CONFIG_UvpParkDriftPhaseAuxOutputSta
+rtDuration_seconds
+
+Aux_param_2
+
+CONFIG_UvpParkDriftPhaseAuxOutputEn
+dDuration_seconds
+
+object
+
+Smoothed number of counted
+objects for 5 volts analog
+output voltage
+
+integer
+
+°C
+
+Maximum
+temperature
+security stop
+
+text
+
+email
+
+Identification of the operator
+filling this configuration table
+
+integer
+
+integer
+
+internal
+cause a
+
+Auxiliary output activation
+mode (0 : disabled, 1 : enabled
+all sequence, 2 : enabled during
+Aux_param_1 at the start of
+the acquisition and before the
+start of the sequence, during
+Aux_param_2
+after
+the
+sequence and before the end
+of the acquisition and 3 :
+enabled and no image
+processed
+during
+the
+sequence)
+
+integer
+
+second
+e
+
+Duration of activation for
+mode 2 at the start of the
+acquisition
+
+integer
+
+second
+e
+
+Duration of activation for
+mode 2 at the end of the
+acquisition
+Taxonomic
+classification
+configuration
+for
+this
+acquisition (“NO_RE” when
+embedded recognition is
+disabled)
+
+Taxo_conf
+
+CONFIG_UvpParkDriftPhaseTaxoTable
+
+text
+
+Remaining_memory
+
+CONFIG_UvpParkDriftPhaseRemainingMe
+mory_Mbyte
+
+integer
+
+4.1.6. Configuration parameters (per
+classification (version > 2022.01)
+
+to
+
+acquisition
+
+MB
+
+SD card remaining memory at
+the start of the acquisition
+
+zone)
+
+relative
+
+to
+
+taxonomic
+
+These metadata are available only when the embedded classification is implemented in the sensor. A
+Taxonomic table is unique to one classification model.
+UVP6 NAME
+
+ARGO NAME
+
+Configuration_name
+
+Model_reference
+
+CONFIG_UvpDepthZone<N
+>TaxoModel
+
+Type
+
+Unit
+
+Explanation
+
+text
+
+Name used to set this configuration
+into the field Taxo_conf, from the
+Acquisition configuration file
+
+text
+
+Taxonomic classification model to be
+used. Automatically filled during
+model creation/export
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+16
+
+Max_size_for_classification
+
+CONFIG_UvpDepthZone<N
+>TaxoMaxSize_NUMBER
+
+Model_nb_classes
+
+CONFIG_UvpDepthZone<N
+>TaxoModelNbClass_NUM
+BER
+
+integer
+
+Number of classes used by the
+classification model. Automatically
+filled during model creation/export
+
+Taxo_ID_for_class_00
+
+CONFIG_UvpDepthZone<N
+>TaxoIdClass00_NUMBER
+
+integer
+
+Ecotaxa taxonomic unique identifier
+for model's class 00
+
+Taxo_ID_for_class_01
+
+CONFIG_UvpDepthZone<N
+>TaxoIdClass01_NUMBER
+
+integer
+
+Ecotaxa taxonomic unique identifier
+for model's class 01
+
+CONFIG_UvpDepthZone<N
+>TaxoIdClass39_NUMBER
+
+integer
+
+Ecotaxa taxonomic unique identifier
+for model's class 39
+
+integer
+
+pixel
+
+Maximum vignette size to perform the
+embedded classification
+
+…..
+
+Taxo_ID_for_class_39
+
+4.1.7. Configuration parameters for parking drift phase relative to taxonomic
+classification (version > 2022.01)
+These metadata are available only when the embedded classification is implemented in the sensor. A
+Taxonomic table is unique to one classification model.
+UVP6 NAME
+
+ARGO NAME
+
+Type
+
+Unit
+
+Explanation
+
+text
+
+Name used to set this configuration
+into the field Taxo_conf, from the
+Acquisition configuration file
+
+Model_reference
+
+CONFIG_UvpParkDriftPhas
+eTaxoModel
+
+text
+
+Taxonomic classification model to be
+used. Automatically filled during
+model creation/export
+
+Max_size_for_classification
+
+CONFIG_UvpParkDriftPhas
+eTaxoMaxSize_NUMBER
+
+integer
+
+Model_nb_classes
+
+CONFIG_UvpParkDriftPhas
+eTaxoModelNbClass_NUM
+BER
+
+integer
+
+Number of classes used by the
+classification model. Automatically
+filled during model creation/export
+
+Taxo_ID_for_class_00
+
+CONFIG_UvpParkDriftPhas
+eTaxoIdClass00_NUMBER
+
+integer
+
+Ecotaxa taxonomic unique identifier
+for model's class 00
+
+Taxo_ID_for_class_01
+
+CONFIG_UvpParkDriftPhas
+eTaxoIdClass01_NUMBER
+
+integer
+
+Ecotaxa taxonomic unique identifier
+for model's class 01
+
+CONFIG_UvpParkDriftPhas
+eTaxoIdClass39_NUMBER
+
+integer
+
+Ecotaxa taxonomic unique identifier
+for model's class 39
+
+Configuration_name
+
+pixel
+
+Maximum vignette size to perform the
+embedded classification
+
+…..
+
+Taxo_ID_for_class_39
+
+4.2.
+
+Large particulate matter data
+
+This section details the data acquired when the instrument light is ON.
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+17
+
+Large Particulate Matter (LPM) data are transmitted over 18 size classes indicated in the transmitted
+metadata (µM Equivalent Spherical Diameter (ESD)).
+These classes are typically [50.8;64[, [64;80.6[, [80.6;102[, [102;128[, [128;161[, [161;203[, [203;256[,
+[256;323[, [323;406[, [406;512[, [512;645[, [645;813[, [813;1020[, [1020;1290[, [1290;1630[,
+[1630;2050[, [2050;2580[, [2580;+∞[ but they might change according to the sensor version,
+calibration and resolution.
+The transmitted information is counts and mean grey level of the detected objects in each of the 18
+classes. The LPM counts are summed of all processed images in the pressure range (slice) defined by
+the float programming. The grey level is averaged per object.
+The mean pressure of the analyzed images, the mean temperature of the sensor and the number of
+images are also transmitted along with the data to allow quality check and data processing.
+
+ARGO NAME
+
+Type
+
+Unit
+
+Explanation
+
+NC_SHORT
+
+count
+
+Number of uvp images in
+the slice
+
+NC_FLOAT
+
+degree_Celsius
+
+Average uvp temperature
+of the slice
+
+NC_INT
+
+count
+
+Number of particles per
+size class of the slice
+
+NC_INT
+
+count
+
+Average grey level per
+particle per size class
+
+NB_IMAGE_PARTICLES
+
+TEMP_PARTICLES
+
+NB_SIZE_SPECTRA_PARTICLES
+
+GREY_SIZE_SPECTRA_PARTICLES
+
+4.3.
+
+Black measurement data
+
+This section details the data acquired when the instrument light is OFF.
+Black data are transmitted over the first five size classes (µM ESD) indicated in the transmitted
+metadata.
+The transmitted information is only the counts in each of the 5 classes.
+The pressure of the image and the temperature of the sensor are also transmitted along with the data
+to allow quality check and data processing.
+
+ARGO NAME
+
+Type
+
+Unit
+
+Explanation
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+18
+
+NC_SHORT
+
+count
+
+Number of uvp images
+without light in the slice
+
+NC_INT
+
+count
+
+Number
+of
+particles
+without light per class of
+the slice
+
+NC_FLOAT
+
+degree_Celsius
+
+Internal temperature of
+the UVP6 sensor without
+light
+
+BLACK_NB_IMAGE_PARTICLES
+
+BLACK_NB_SIZE_SPECTRA_PARTICLES
+BLACK_TEMP_PARTICLES
+
+4.4.
+
+Taxonomic data (identification)
+
+The identification is optional and selected when programming the float.
+When selected, the identification process is made on large objects (> 645 µm ESD, calibrated) from the
+same lighted images also processed for LPM. It is thus a selected part of the counted particles that will
+be processed for classification.
+The classification of the large objects is internally performed in up to 40 classes, defined by the
+classification model and so taxonomic metadata.
+The taxonomic data can be summed by the float in the different pressure slices than the LPM data. The
+number of objects of each taxonomic category in each slice is transmitted as well as the average
+volume and grey level of those objects. The volume of an object is the spherical equivalent volume in
+pixel^3, pixel size being provided in the hardware metadata.
+The mean pressure of the analyzed images, the mean temperature of the sensor and the number of
+averaged images are also transmitted along with the data to allow quality check and data processing.
+
+ARGO NAME
+
+Type
+
+Unit
+
+INDEX_CATEGORY
+
+NC_BYTE
+
+NB_CATEGORY
+
+NC_BYTE
+
+count
+
+Number of different
+taxonomy categories
+found in the record
+
+NC_SHORT
+
+count
+
+Number of uvp
+images in the slice
+
+NC_SHORT
+
+count
+
+Number of objects of
+a specific category in
+the slice
+
+NC_FLOAT
+
+pixel^3
+
+Average volume per
+object of a specific
+category in the slice
+
+Index
+of
+the
+taxonomy category
+
+NB_IMAGE_CATEGORY
+
+NB_OBJECT_CATEGORY
+
+OBJECT_MEAN_VOLUME_CATEGORY
+
+Explanation
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+19
+
+NC_INT
+
+Average grey level
+per object of a
+specific category in
+the slice
+
+NC_INT
+
+Id of the taxonomy
+category
+
+OBJECT_MEAN_GREY_LEVEL_CATEGORY
+
+ECOTAXA_CATEGORY_ID
+
+4.5.
+
+DAC processed data
+
+Following the large particulate matter data and the taxonomic data, the concentrations and
+biovolumes are computed at the DAC level, as well as an adjusted pressure. The computing process is
+described in section 3 above. There are up to 18 size classes for the large particulate matter data and
+up to 40 taxonomy categories for the taxonomic data.
+ARGO NAME
+
+Type
+
+Unit
+
+Explanation
+
+NC_FLOAT
+
+#/L
+
+Concentration of particles
+per size class in the slice
+
+NC_FLOAT
+
+#/L
+
+Concentration of objects
+per category in the slice
+
+NC_FLOAT
+
+micrometer^3/ml
+
+Biovolume of objects per
+category in the slice
+
+CONCENTRATION_LPM
+
+CONCENTRATION_CATEGORY
+
+BIOVOLUME_CATEGORY
+
+5. Changes from older versions
+This document is for a float with a uvp6 with a more recent version than ver2022.01. Older versions
+have changes in configuration frames. Functioning and data frame stay the same for the UVP6 version
+2022.01 (NKE float USEA version 1.02.002). UVP6 version older than 2022.01 does not have embedded
+classification and the LPM data is averaged by the number of images.
+The changes are listed in this section for information.
+
+5.1.
+
+UVP6 version 2022.01
+
+The 2022.01 version has small changes in the HWconf frame and the ACQconf frame compared to
+more recent versions. It misses the Firmware_version variable in the HWconf frame and the
+Aux_mode, Aux_param_1 and Aux_param_2 variables in the ACQconf frame.
+5.1.1. Configuration parameters relative to hardware:
+UVP6 NAME
+
+ARGO NAME
+
+Type
+
+Units
+
+Explanation
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+20
+
+Acquisition_mode
+
+Default_acquisition_c
+onfiguration
+
+CONFIG_UvpAcquisitionMode_NUMBER
+
+CONFIG_UvpAcquisitionModeDefault
+
+integer
+
+0: SUPERVISED mode, 1:
+AUTONOMOUS
+mode
+(including CTD mode), 2: TIMEprogrammed mode
+
+text
+
+Name of the acquisition
+configuration
+automatically
+launched
+when
+Acquisition_mode = 1
+Optional delay before starting
+image
+acquisition
+when
+Acquisition_mode
+=
+1
+(AUTONOMOUS)
+
+Delay_after_power_u
+p_on_time_mode
+
+CONFIG_UvpDelayPowerModeTime_minu
+tes
+
+integer
+
+Light_ref
+
+CONFIG_UvpLightSn
+
+text
+
+Light unit serial number
+
+integer
+
+Selection of the lighting
+correction LUT -> 0: no
+correction, 1: light unit
+correction #1, 2: light unit
+correction #2 (default : 1)
+Delay between light unit
+trigger and image sensor
+shutter
+
+minute
+
+Correction_table_acti
+vation
+
+CONFIG_UvpCorrectionTableActivation_N
+UMBER
+
+Time_between_lightin
+g_trigger_and_acquisi
+tion
+
+CONFIG_UvpLightTriggerAcquisitionTime_
+usec
+
+integer
+
+Pressure_sensor_ref
+
+CONFIG_UvpPresSn
+
+text
+
+Pressure sensor serial number
+(empty if no sensor installed)
+
+float
+
+dbar
+
+Vertical distance between the
+image plan and the pressure
+measurement point ( >0 if
+pressure sensor above image
+field, if undefined, set 999)
+
+MB
+
+SD card storage capacity,
+automatically updated by
+UVP6 when parameters are
+modified, do not edit
+
+MB
+
+Minimal memory remaining in
+the SD card to keep saving
+images or vignettes, do not edit
+
+Pressure_offset
+
+CONFIG_UvpVerticalPressureOffset_dbar
+
+Storage_capacity
+
+CONFIG_UvpStorageCapacity_Mbyte
+
+Minimum_remaining_
+memory_for_thumbn
+ail_saving
+
+CONFIG_UvpMinSecuredForThumbSaving
+Capacity_Mbyte
+
+Baud_Rate
+
+CONFIG_UvpBaudRateCode_NUMBER
+
+integer
+
+integer
+
+µS
+
+UVP6 RS232 baud rate
+selection -> 0: 9600 bauds, 1:
+19200 bauds, 2: 38400 bauds
+
+integer
+
+Black_level
+
+CONFIG_UvpBlackLevel_NUMBER
+
+integer
+
+12 bits
+gray
+level
+
+Shutter
+
+CONFIG_UvpShutter_usec
+
+integer
+
+µS
+
+Image sensor integration time
+(shutter)
+
+Gain
+
+CONFIG_UvpGain_dB
+
+integer
+
+dB
+
+Image sensor gain, do not edit
+Threshold
+for
+image
+segmentation
+(pixels
+<=
+Threshold are considered
+background)
+
+Threshold
+
+CONFIG_UvpThreshold_NUMBER
+
+integer
+
+8 bits
+gray
+scale
+
+Aa
+
+CONFIG_UvpSizeToPixelsConversionAa_u
+m^2
+
+integer
+
+µM²
+
+Image sensor
+parameter
+
+black
+
+level
+
+Calibration
+parameter
+(corresponding area in the
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+21
+
+scene represented by each
+pixel)
+Calibration
+(adjusting
+reflections)
+
+for
+
+parameter
+specular
+
+Exp
+
+CONFIG_UvpSizeToPixelsConversionExp
+
+float
+
+Pixel_Size
+
+CONFIG_UvpPixelSize_um
+
+integer
+
+µM
+
+Uncalibrated pixel size (side of
+the pixel in the image field)
+
+Image_volume
+
+CONFIG_UvpImageVolume_L
+
+float
+
+L
+
+Image volume
+
+Calibration_date
+
+CONFIG_UvpCalibrationDate_YYYYMMDD
+HHMM
+
+date
+
+YYYYM
+MDDH
+HMM
+
+Calibration date for the values
+in this table
+
+Last_parameters_mod
+ification
+
+CONFIG_UvpLastUpdateConfigDate_YYYY
+MMDDHHMM
+
+date
+
+YYYYM
+MDDH
+HMM
+
+Automatically updated by
+UVP6
+when
+hardware
+parameters are modified
+
+Operator_email
+
+CONFIG_UvpHardwareEmail
+
+text
+
+email
+
+Identification of the operator
+filling this configuration table
+
+Min_esd_class_01
+
+CONFIG_UvpMinEsdClass01_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 01
+
+Min_esd_class_02
+
+CONFIG_UvpMinEsdClass02_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 02
+
+…
+
+…
+
+…
+
+…
+
+…
+
+Min_esd_class_17
+
+CONFIG_UvpMinEsdClass17_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 17
+
+Min_esd_class_18
+
+CONFIG_UvpMinEsdClass18_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 18
+
+5.1.2. Configuration parameters (per acquisition zone) relative to acquisition:
+UVP6
+NAME
+
+Configuration_name
+
+ARGO NAME
+
+Type
+
+Units
+
+Explanation
+
+CONFIG_UvpDepthZone<N>AcqConfNam
+e
+
+text
+
+Name used to launch this
+configuration
+0: Triggered by vector, 1: Asks
+for pressure and time, 2: Use
+UVP6 Acquisition_frequency,
+3: CTD mode (mandatory
+Pressure Sensor)
+
+PT_mode
+
+CONFIG_UvpDepthZone<N>PtMode_NU
+MBER
+
+integer
+
+Acquisition_frequency
+
+CONFIG_UvpDepthZone<N>SampleRateM
+ax_hertz
+
+float
+
+Hz
+
+Acquisition
+(maximum value)
+
+Frames_per_bloc
+
+CONFIG_UvpDepthZone<N>FramesPerBlo
+c_NUMBER
+
+integer
+
+frame
+
+Nb of frames to accumulate
+and synthesize to send
+
+dbar
+
+When in CTD mode (PT_mode=
+3),
+pressure
+value
+to
+automatically
+start
+the
+acquisition
+
+Pressure_for_auto_st
+art
+
+CONFIG_UvpDepthZone<N>PressureAuto
+Start_dbar
+
+integer
+
+frequency
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+22
+
+Pressure_difference_f
+or_auto_stop
+
+Result_sending
+
+CONFIG_UvpDepthZone<N>PressureAuto
+Stop_dbar
+
+CONFIG_UvpDepthZone<N>ResultSending
+_LOGICAL
+
+Save_synthetic_data_f
+or_delayed_request
+
+CONFIG_UvpDepthZone<N>SyntheticData
+Saving_LOGICAL
+
+Save_images
+
+CONFIG_UvpDepthZone<N>SavingImages
+_NUMBER
+
+Vignetting_lower_limi
+t_size
+
+Appendices_ratio
+
+Interval_for_measurin
+g_background_noise
+
+CONFIG_UvpDepthZone<N>MinVignettin
+gLimitESD_um
+
+CONFIG_UvpDepthZone<N>AppendicesRa
+tio
+
+CONFIG_UvpDepthZone<N>BackgroundN
+oiseBloc_NUMBER
+
+Image_nb_for_smoot
+hing
+
+CONFIG_UvpDepthZone<N>FrameNumbe
+rForSmoothing_NUMBER
+
+Analog_output_activa
+tion
+
+CONFIG_UvpDepthZone<N>AnalogOutput
+_LOGICAL
+
+Gain_for_analog_out
+
+CONFIG_UvpDepthZone<N>AnalogOutput
+Gain_NUMBER
+
+Maximal_internal_te
+mperature
+
+CONFIG_UvpDepthZone<N>Temperature
+Max_degC
+
+Operator_email
+
+CONFIG_UvpDepthZone<N>ConfigAcqEm
+ail
+
+integer
+
+dbar
+
+When in CTD mode (PT_mode=
+3), pressure drop from deepest
+value to automatically stop the
+acquisition
+
+boolean
+
+0/false: results are never sent 1/true: synthesized results are
+sent through RS232 after each
+bloc
+
+boolean
+
+0/false: do not save - 1/true:
+save synthetic data for a
+potential delayed request
+(useful
+only
+for
+troubleshooting)
+
+integer
+
+How to save Images -> 0: don't
+save, 1: save whole raw image,
+2: save selected vignettes only
+
+integer
+
+When saving vignettes (Save
+images= 2), minimum object
+size (ESD) to save vignette,
+utilizes Aa and Exp, (default :
+645)
+
+µM
+
+float
+
+When saving vignettes (Save
+images= 2), vignette size to
+actual object size ratio (default
+: 1.5)
+
+integer
+
+bloc
+
+Background noise measured
+every 'interval' (bloc acquired
+without flashing). Disabled if
+zero
+
+frame
+
+Nb of images to measure
+temperature (for safety stop)
+and
+average
+particle
+abundance for the analog
+output
+
+integer
+
+boolean
+
+Activation of the particle
+abundance analog output :
+0/false: disabled - 1/true
+
+integer
+
+object
+
+Smoothed number of counted
+objects for 5 volts analog
+output voltage
+
+integer
+
+°C
+
+Maximum
+temperature
+security stop
+
+text
+
+email
+
+Identification of the operator
+filling this configuration table
+
+Taxo_conf
+
+CONFIG_UvpDepthZone<N>TaxoTable
+
+text
+
+Remaining_memory
+
+CONFIG_UvpDepthZone<N>RemainingMe
+mory_Mbyte
+
+integer
+
+to
+
+internal
+cause a
+
+Taxonomic
+classification
+configuration
+for
+this
+acquisition (“NO_RE” when
+embedded recognition is
+disabled)
+
+MB
+
+SD card remaining memory at
+the start of the acquisition
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+23
+
+5.1.3. Configuration parameters for parking drift phase relative to acquisition:
+UVP6
+NAME
+
+ARGO NAME
+
+Type
+
+Units
+
+Explanation
+
+Configuration_name
+
+CONFIG_ParkDriftPhaseAcqConfName
+
+text
+
+Name used to launch this
+configuration
+0: Triggered by vector, 1: Asks
+for pressure and time, 2: Use
+UVP6 Acquisition_frequency,
+3: CTD mode (mandatory
+Pressure Sensor)
+
+PT_mode
+
+CONFIG_UvpParkDriftPhasePtMode_NUM
+BER
+
+integer
+
+Acquisition_frequency
+
+CONFIG_UvpParkDriftPhaseSampleRateM
+ax_hertz
+
+float
+
+Hz
+
+Acquisition
+(maximum value)
+
+Frames_per_bloc
+
+CONFIG_UvpParkDriftPhaseFramesPerBlo
+c_NUMBER
+
+integer
+
+frame
+
+Nb of frames to accumulate
+and synthesize to send
+
+dbar
+
+When in CTD mode (PT_mode=
+3),
+pressure
+value
+to
+automatically
+start
+the
+acquisition
+
+dbar
+
+When in CTD mode (PT_mode=
+3), pressure drop from deepest
+value to automatically stop the
+acquisition
+
+Pressure_for_auto_st
+art
+
+Pressure_difference_f
+or_auto_stop
+
+Result_sending
+
+CONFIG_UvpParkDriftPhasePressureAuto
+Start_dbar
+
+CONFIG_UvpParkDriftPhasePressureAuto
+Stop_dbar
+
+CONFIG_UvpParkDriftPhaseResultSending
+_LOGICAL
+
+Save_synthetic_data_f
+or_delayed_request
+
+CONFIG_UvpParkDriftPhaseSyntheticData
+Saving_LOGICAL
+
+Save_images
+
+CONFIG_UvpParkDriftPhaseSavingImages
+_NUMBER
+
+Vignetting_lower_limi
+t_size
+
+Appendices_ratio
+
+Interval_for_measurin
+g_background_noise
+
+CONFIG_UvpParkDriftPhaseMinVignetting
+LimitESD_um
+
+CONFIG_UvpParkDriftPhaseAppendicesRa
+tio
+
+CONFIG_UvpParkDriftPhaseBackgroundN
+oiseBloc_NUMBER
+
+integer
+
+integer
+
+frequency
+
+boolean
+
+0/false: results are never sent 1/true: synthesized results are
+sent through RS232 after each
+bloc
+
+boolean
+
+0/false: do not save - 1/true:
+save synthetic data for a
+potential delayed request
+(useful
+only
+for
+troubleshooting)
+
+integer
+
+How to save Images -> 0: don't
+save, 1: save whole raw image,
+2: save selected vignettes only
+
+integer
+
+When saving vignettes (Save
+images= 2), minimum object
+size (ESD) to save vignette,
+utilizes Aa and Exp, (default :
+645)
+
+µM
+
+float
+
+When saving vignettes (Save
+images= 2), vignette size to
+actual object size ratio (default
+: 1.5)
+
+integer
+
+Background noise measured
+every 'interval' (bloc acquired
+without flashing). Disabled if
+zero
+
+bloc
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+24
+
+Image_nb_for_smoot
+hing
+
+CONFIG_UvpParkDriftPhaseFrameNumbe
+rForSmoothing_NUMBER
+
+Analog_output_activa
+tion
+
+CONFIG_UvpParkDriftPhaseAnalogOutput
+_LOGICAL
+
+Gain_for_analog_out
+
+CONFIG_UvpParkDriftPhaseAnalogOutput
+Gain_NUMBER
+
+Maximal_internal_te
+mperature
+
+CONFIG_UvpParkDriftPhaseTemperature
+Max_degC
+
+Operator_email
+
+CONFIG_UvpParkDriftPhaseConfigAcqEma
+il
+
+integer
+
+boolean
+
+Activation of the particle
+abundance analog output :
+0/false: disabled - 1/true
+
+integer
+
+object
+
+Smoothed number of counted
+objects for 5 volts analog
+output voltage
+
+integer
+
+°C
+
+Maximum
+temperature
+security stop
+
+text
+
+email
+
+Identification of the operator
+filling this configuration table
+
+Taxo_conf
+
+CONFIG_UvpParkDriftPhaseTaxoTable
+
+text
+
+Remaining_memory
+
+CONFIG_UvpParkDriftPhaseRemainingMe
+mory_Mbyte
+
+integer
+
+5.2.
+
+frame
+
+Nb of images to measure
+temperature (for safety stop)
+and
+average
+particle
+abundance for the analog
+output
+
+to
+
+internal
+cause a
+
+Taxonomic
+classification
+configuration
+for
+this
+acquisition (“NO_RE” when
+embedded recognition is
+disabled)
+
+MB
+
+SD card remaining memory at
+the start of the acquisition
+
+UVP6 version 2021 and older
+
+This section is valid for ver2021 and older.
+The 2020 firmware version is the first stable version of the UVP6 firmware and has been widespread
+with the first functioning unit. It has been simplified and improved to optimized the interaction with
+autonomous vectors. It has the same missing variables as the ver2022.01 with additional variables:
+Time_between_lighting_power_up_and_trigger and IP_adress for the HWconf; Blocs_per_PT,
+Limit_lpm_detection_size, Minimum_object_number and Taxo_flag for the ACQconf.
+This version does not have any embedded classification option. No taxonomic configurations and
+frames exist. Data at DAC level provided directly the concentrations averaged per images.
+5.2.1. Configuration parameters relative to hardware :
+UVP6 NAME
+
+Acquisition_mode
+
+Default_acquisition_c
+onfiguration
+
+ARGO NAME
+
+CONFIG_UvpAcquisitionMode_NUMBER
+
+CONFIG_UvpAcquisitionModeDefault
+
+Type
+
+Units
+
+Explanation
+
+integer
+
+0: SUPERVISED mode, 1:
+AUTONOMOUS
+mode
+(including CTD mode), 2: TIMEprogrammed mode
+
+text
+
+Name of the acquisition
+configuration
+automatically
+launched
+when
+Acquisition_mode = 1
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+25
+
+Optional delay before starting
+image
+acquisition
+when
+Acquisition_mode
+=
+1
+(AUTONOMOUS)
+
+Delay_after_power_u
+p_on_time_mode
+
+CONFIG_UvpDelayPowerModeTime_minu
+tes
+
+integer
+
+Light_ref
+
+CONFIG_UvpLightSn
+
+text
+
+Light unit serial number
+Selection of the lighting
+correction LUT -> 0: no
+correction, 1: light unit
+correction #1, 2: light unit
+correction #2 (default : 1)
+
+minute
+
+Correction_table_acti
+vation
+
+CONFIG_UvpCorrectionTableActivation_N
+UMBER
+
+integer
+
+Time_between_lightin
+g_power_up_and_trig
+ger
+
+CONFIG_UvpLightWarmUpTime_usec
+
+integer
+
+Time_between_lightin
+g_trigger_and_acquisi
+tion
+
+CONFIG_UvpLightTriggerAcquisitionTime_
+usec
+
+integer
+
+Pressure_sensor_ref
+
+CONFIG_UvpPresSn
+
+text
+
+Pressure sensor serial number
+(empty if no sensor installed)
+
+float
+
+dbar
+
+Vertical distance between the
+image plan and the pressure
+measurement point ( >0 if
+pressure sensor above image
+field, if undefined, set 999)
+
+MB
+
+SD card storage capacity,
+automatically updated by
+UVP6 when parameters are
+modified, do not edit
+
+MB
+
+Minimal memory remaining in
+the SD card to keep saving
+images or vignettes, do not edit
+
+Pressure_offset
+
+CONFIG_UvpVerticalPressureOffset_dbar
+
+Storage_capacity
+
+CONFIG_UvpStorageCapacity_Mbyte
+
+Minimum_remaining_
+memory_for_thumbn
+ail_saving
+
+CONFIG_UvpMinSecuredForThumbSaving
+Capacity_Mbyte
+
+Baud_Rate
+
+CONFIG_UvpBaudRateCode_NUMBER
+
+IP_adress
+
+integer
+
+integer
+
+µS
+
+Delay between light
+powering and trigger
+
+unit
+
+µS
+
+Delay between light unit
+trigger and image sensor
+shutter
+
+integer
+
+UVP6 RS232 baud rate
+selection -> 0: 9600 bauds, 1:
+19200 bauds, 2: 38400 bauds
+
+text
+
+UVP6 IP address for Ethernet
+communication
+
+Black_level
+
+CONFIG_UvpBlackLevel_NUMBER
+
+integer
+
+12 bits
+gray
+level
+
+Shutter
+
+CONFIG_UvpShutter_usec
+
+integer
+
+µS
+
+Image sensor integration time
+(shutter)
+
+Gain
+
+CONFIG_UvpGain_dB
+
+integer
+
+dB
+
+Image sensor gain, do not edit
+
+integer
+
+8 bits
+gray
+scale
+
+Threshold
+for
+image
+segmentation
+(pixels
+<=
+Threshold are considered
+background)
+
+µM²
+
+Calibration
+parameter
+(corresponding area in the
+scene represented by each
+pixel)
+
+Threshold
+
+Aa
+
+CONFIG_UvpThreshold_NUMBER
+
+CONFIG_UvpSizeToPixelsConversionAa_u
+m^2
+
+integer
+
+Image sensor
+parameter
+
+black
+
+level
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+26
+
+Calibration
+(adjusting
+reflections)
+
+for
+
+parameter
+specular
+
+Exp
+
+CONFIG_UvpSizeToPixelsConversionExp
+
+float
+
+Pixel_Size
+
+CONFIG_UvpPixelSize_um
+
+integer
+
+µM
+
+Uncalibrated pixel size (side of
+the pixel in the image field)
+
+Image_volume
+
+CONFIG_UvpImageVolume_L
+
+float
+
+L
+
+Image volume
+
+Calibration_date
+
+CONFIG_UvpCalibrationDate_YYYYMMDD
+HHMM
+
+date
+
+YYYYM
+MDDH
+HMM
+
+Calibration date for the values
+in this table
+
+Last_parameters_mod
+ification
+
+CONFIG_UvpLastUpdateConfigDate_YYYY
+MMDDHHMM
+
+date
+
+YYYYM
+MDDH
+HMM
+
+Automatically updated by
+UVP6
+when
+hardware
+parameters are modified
+
+Operator_email
+
+CONFIG_UvpHardwareEmail
+
+text
+
+email
+
+Identification of the operator
+filling this configuration table
+
+Min_esd_class_01
+
+CONFIG_UvpMinEsdClass01_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 01
+
+Min_esd_class_02
+
+CONFIG_UvpMinEsdClass02_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 02
+
+…
+
+…
+
+…
+
+…
+
+…
+
+Min_esd_class_17
+
+CONFIG_UvpMinEsdClass17_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 17
+
+Min_esd_class_18
+
+CONFIG_UvpMinEsdClass18_um
+
+float
+
+µM
+
+Lower Equivalent Spherical
+Diameter for class 18
+
+5.2.2. Configuration parameters (per acquisition zone) relative to acquisition:
+UVP6
+NAME
+
+Configuration_name
+
+ARGO NAME
+
+Type
+
+Units
+
+Explanation
+
+CONFIG_UvpDepthZone<N>AcqConfNam
+e
+
+text
+
+Name used to launch this
+configuration
+0: Triggered by vector, 1: Asks
+for pressure and time, 2: Use
+UVP6 Acquisition_frequency,
+3: CTD mode (mandatory
+Pressure Sensor)
+
+PT_mode
+
+CONFIG_UvpDepthZone<N>PtMode_NU
+MBER
+
+integer
+
+Acquisition_frequency
+
+CONFIG_UvpDepthZone<N>SampleRateM
+ax_hertz
+
+float
+
+Hz
+
+Acquisition
+(maximum value)
+
+Frames_per_bloc
+
+CONFIG_UvpDepthZone<N>FramesPerBlo
+c_NUMBER
+
+integer
+
+frame
+
+Nb of frames to accumulate
+and synthesize to send
+
+Blocs_per_PT
+
+CONFIG_UvpDepthZone<N>BlocsPerPt_N
+UMBER
+
+integer
+
+bloc
+
+Nb of blocs to acquire before a
+new acquisition or asking for a
+new pressure information
+
+Pressure_for_auto_st
+art
+
+CONFIG_UvpDepthZone<N>PressureAuto
+Start_dbar
+
+integer
+
+decibar
+
+frequency
+
+When
+in
+CTD
+mode
+(PT_mode= 3), pressure value
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+27
+
+to automatically start the
+acquisition
+
+Pressure_difference_f
+or_auto_stop
+
+Result_sending
+
+Save_synthetic_data_f
+or_delayed_request
+Limit_lpm_detection_
+size
+
+Save_images
+
+Vignetting_lower_limi
+t_size
+
+Appendices_ratio
+
+Interval_for_measurin
+g_background_noise
+
+CONFIG_UvpDepthZone<N>PressureAuto
+Stop_dbar
+
+CONFIG_UvpDepthZone<N>ResultSending
+_LOGICAL
+
+CONFIG_UvpDepthZone<N>SyntheticData
+Saving_LOGICAL
+CONFIG_UvpDepthZone<N>LpmDetection
+LimitESD_um
+
+CONFIG_UvpDepthZone<N>SavingImages
+_NUMBER
+
+CONFIG_UvpDepthZone<N>MinVignetting
+LimitESD_um
+
+CONFIG_UvpDepthZone<N>AppendicesRa
+tio
+
+CONFIG_UvpDepthZone<N>BackgroundN
+oiseBloc_NUMBER
+
+Image_nb_for_smoot
+hing
+
+CONFIG_UvpDepthZone<N>FrameNumbe
+rForSmoothing_NUMBER
+
+Analog_output_activa
+tion
+
+CONFIG_UvpDepthZone<N>AnalogOutput
+_LOGICAL
+
+Gain_for_analog_out
+
+CONFIG_UvpDepthZone<N>AnalogOutput
+Gain_NUMBER
+
+Minimum_object_nu
+mber
+
+Maximal_internal_te
+mperature
+
+integer
+
+boolean
+
+0/false: results are never sent 1/true: synthesized results are
+sent through RS232 after each
+bloc
+
+boolean
+
+0/false: do not save - 1/true:
+save synthetic data for a
+potential delayed request
+(useful
+only
+for
+troubleshooting)
+
+Integer
+
+um
+
+Minimum size (ESD) to count
+and analyze objects, utilizes Aa
+and Exp, (default : 10)
+
+integer
+
+How to save Images -> 0: don't
+save, 1: save whole raw image,
+2: save selected vignettes only
+
+integer
+
+When
+saving
+vignettes
+(Save_images= 2), minimum
+object size (ESD) to save
+vignette, utilizes Aa and Exp,
+(default : 645)
+
+µM
+
+float
+
+When
+saving
+vignettes
+(Save_images= 2), vignette
+size to actual object size ratio
+(default : 1.5)
+
+integer
+
+bloc
+
+Background noise measured
+every 'interval' (bloc acquired
+without flashing). Disabled if
+zero
+
+frame
+
+Nb of images to measure
+temperature (for safety stop)
+and
+average
+particle
+abundance for the analog
+output
+
+integer
+
+boolean
+
+Activation of the particle
+abundance analog output :
+0/false: disabled - 1/true
+
+integer
+
+object
+
+Smoothed number of counted
+objects for 5 volts analog
+output voltage
+
+object
+
+Smoothed minimum number
+of objects to cause a security
+stop (not implemented)
+
+°C
+
+Maximum
+temperature
+security stop
+
+integer
+
+CONFIG_UvpDepthZone<N>Temperature
+Max_degC
+
+decibar
+
+When
+in
+CTD
+mode
+(PT_mode= 3), pressure drop
+from deepest value to
+automatically
+stop
+the
+acquisition
+
+integer
+
+to
+
+internal
+cause a
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+28
+
+Operator_email
+
+CONFIG_UvpDepthZone<N>ConfigAcqEm
+ail
+
+text
+
+Identification of the operator
+filling this configuration table
+
+Taxo_flag
+
+CONFIG_UvpDepthZone<N>TaxoAcqFlag_
+LOGICAL
+
+boolean
+
+Taxonomic classification flag
+for this acquisition (not
+implemented)
+
+Remaining_memory
+
+CONFIG_UvpDepthZone<N>RemainingMe
+mory_Mbyte
+
+integer
+
+MB
+
+SD card remaining memory at
+the start of the acquisition
+
+5.2.3. Configuration parameters for parking drift phase relative to acquisition:
+UVP6
+NAME
+
+ARGO NAME
+
+Type
+
+Units
+
+Explanation
+
+Configuration_name
+
+CONFIG_UvpParkDriftPhaseAcqConfName
+
+text
+
+Name used to launch this
+configuration
+0: Triggered by vector, 1: Asks
+for pressure and time, 2: Use
+UVP6 Acquisition_frequency,
+3: CTD mode (mandatory
+Pressure Sensor)
+
+PT_mode
+
+CONFIG_UvpParkDriftPhasePtMode_NUM
+BER
+
+integer
+
+Acquisition_frequency
+
+CONFIG_UvpParkDriftPhaseSampleRateM
+ax_hertz
+
+float
+
+Hz
+
+Acquisition
+(maximum value)
+
+Frames_per_bloc
+
+CONFIG_UvpParkDriftPhaseFramesPerBlo
+c_NUMBER
+
+integer
+
+frame
+
+Nb of frames to accumulate
+and synthesize to send
+
+Blocs_per_PT
+
+CONFIG_UvpParkDriftPhaseBlocsPerPt_N
+UMBER
+
+bloc
+
+Nb of blocs to acquire before a
+new acquisition or asking for a
+new pressure information
+
+deciba
+r
+
+When in CTD mode (PT_mode=
+3),
+pressure
+value
+to
+automatically
+start
+the
+acquisition
+
+deciba
+r
+
+When in CTD mode (PT_mode=
+3), pressure drop from deepest
+value to automatically stop the
+acquisition
+
+Pressure_for_auto_st
+art
+
+Pressure_difference_f
+or_auto_stop
+
+Result_sending
+
+Save_synthetic_data_f
+or_delayed_request
+Limit_lpm_detection_
+size
+
+Save_images
+
+CONFIG_UvpParkDriftPhasePressureAuto
+Start_dbar
+
+CONFIG_UvpParkDriftPhasePressureAuto
+Stop_dbar
+
+CONFIG_UvpParkDriftPhaseResultSending
+_LOGICAL
+
+CONFIG_UvpParkDriftPhaseSyntheticData
+Saving_LOGICAL
+CONFIG_UvpParkDriftPhaseLpmDetection
+LimitESD_um
+
+CONFIG_UvpParkDriftPhaseSavingImages
+_NUMBER
+
+integer
+
+integer
+
+integer
+
+frequency
+
+boolean
+
+0/false: results are never sent 1/true: synthesized results are
+sent through RS232 after each
+bloc
+
+boolean
+
+0/false: do not save - 1/true:
+save synthetic data for a
+potential delayed request
+(useful
+only
+for
+troubleshooting)
+
+Integer
+
+integer
+
+um
+
+Minimum size (ESD) to count
+and analyze objects, utilizes Aa
+and Exp, (default : 10)
+How to save Images -> 0: don't
+save, 1: save whole raw image,
+2: save selected vignettes only
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+29
+
+Vignetting_lower_limi
+t_size
+
+Appendices_ratio
+
+Interval_for_measurin
+g_background_noise
+
+CONFIG_UvpParkDriftPhaseMinVignetting
+LimitESD_um
+
+CONFIG_UvpParkDriftPhaseAppendicesRa
+tio
+
+CONFIG_UvpParkDriftPhaseBackgroundN
+oiseBloc_NUMBER
+
+Image_nb_for_smoot
+hing
+
+CONFIG_UvpParkDriftPhaseFrameNumbe
+rForSmoothing_NUMBER
+
+Analog_output_activa
+tion
+
+CONFIG_UvpParkDriftPhaseAnalogOutput
+_LOGICAL
+
+Gain_for_analog_out
+
+CONFIG_UvpParkDriftPhaseAnalogOutput
+Gain_NUMBER
+
+Minimum_object_nu
+mber
+
+integer
+
+µM
+
+When saving vignettes (Save
+images= 2), minimum object
+size (ESD) to save vignette,
+utilizes Aa and Exp, (default :
+645)
+
+float
+
+When
+saving
+vignettes
+(Save_images= 2), vignette size
+to actual object size ratio
+(default : 1.5)
+
+integer
+
+bloc
+
+Background noise measured
+every 'interval' (bloc acquired
+without flashing). Disabled if
+zero
+
+frame
+
+Nb of images to measure
+temperature (for safety stop)
+and
+average
+particle
+abundance for the analog
+output
+
+integer
+
+boolean
+
+Activation of the particle
+abundance analog output :
+0/false: disabled - 1/true
+
+integer
+
+object
+
+Smoothed number of counted
+objects for 5 volts analog
+output voltage
+
+object
+
+Smoothed minimum number
+of objects to cause a security
+stop (not implemented)
+
+integer
+
+Maximal_internal_te
+mperature
+
+CONFIG_UvpParkDriftPhaseTemperature
+Max_degC
+
+integer
+
+°C
+
+Maximum
+temperature
+security stop
+
+Operator_email
+
+CONFIG_UvpParkDriftPhaseConfigAcqEma
+il
+
+text
+
+email
+
+Identification of the operator
+filling this configuration table
+
+Taxo_flag
+
+CONFIG_UvpParkDriftPhaseTaxoAcqFlag_
+LOGICAL
+
+boolean
+
+Remaining_memory
+
+CONFIG_UvpParkDriftPhaseRemainingMe
+mory_Mbyte
+
+integer
+
+to
+
+internal
+cause a
+
+Taxonomic classification flag
+for this acquisition (not
+implemented)
+
+MB
+
+SD card remaining memory at
+the start of the acquisition
+
+5.2.4. Particles data at DAC level
+The particles data at the DAC level was different. The actual particles numbers were average per UVP6
+images, as shown below.
+Be careful, the grey data of large particulate matter of this version is wrong due to a mathematical
+mistake into the computing. The grey level was summed and divided by the number of uvp6 frame (so
+the number of uvp6 image in that version) and not the weighted average on the number of particles.
+It must be flagged as bad data (QC flag 4) and should not be used.
+LPM data:
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+30
+
+ARGO NAME
+
+Type
+
+Unit
+
+Explanation
+
+NB_SIZE_SPECTRA_PARTICLES_PER_IMAGE
+
+NC_FLOAT
+
+count/# analysed images
+
+Averaged
+number
+of
+particles per
+size class
+
+GREY_SIZE_SPECTRA_PARTICLES
+
+NC_INT
+
+count
+
+Average grey
+level
+per
+particle per
+size class
+
+TEMP_PARTICLES
+
+NC_FLOAT
+
+degree_Celsius
+
+Average uvp
+temperature
+of the slice
+
+NB_IMAGE_PARTICLES
+
+NC_SHORT
+
+count
+
+Number
+of
+uvp images in
+the slice
+
+Black data:
+ARGO NAME
+
+Type
+
+Type/Unit
+
+Explanation
+
+NC_SHORT
+
+count
+
+Number of uvp
+images without
+light in the slice
+
+BLACK_NB_SIZE_SPECTRA_PARTICLES
+
+NC_INT
+
+count
+
+Number
+of
+particles
+without
+light
+per class of the
+slice
+
+BLACK_TEMP_PARTICLES
+
+NC_FLOAT
+
+degree_Celsius
+
+Internal
+temperature of
+the UVP6 sensor
+without light
+
+BLACK_NB_IMAGE_PARTICLES
+
+Computing the concentrations:
+The data process for LPM concentrations still need to be computed with the sampled volume using the
+Image_volume metadata to get results in #/L.
+CONCENTRATION_LPM (#/L) = NB_SIZE_SPECTRA_PARTICLES_PER_IMAGE /
+CONFIG_UvpImageVolume_L
+
+6. References
+Picheral M, Catalano C, Brousseau D, Claustre H, Coppola L, Leymarie E, Coindat J, Dias F, Fevre S, Guidi
+L, Irisson J-O, Legendre L, Lombard F, Mortier L, Penkerc'h C, Rogge A, Schmechtig C, Thibault S, Tixier
+T, Waite A, Stemmann L (2022) The Underwater Vision Profiler 6: an imaging sensor of particle size
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+31
+
+spectra and plankton, for autonomous and cabled platforms. Limnol Oceanogr-meth 20: 115-129 | doi:
+10.1002/lom3.10475
+Florian Ricour. Towards a new insight of the carbon transport in the global ocean. Ocean, Atmosphere.
+Sorbonne Université; Université de Liège, 2023. English. ffNNT : 2023SORUS191ff. fftel04200208f
+
+Argo data managementProcessing BGC-Argo particles and plankton in the aux directory at the Coriolis DAC
+
+
 
 ;
 
