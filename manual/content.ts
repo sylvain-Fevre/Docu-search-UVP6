@@ -1,4 +1,3 @@
-export const manualContent = `
 // =======================================================================
 // INSTRUCTION IMPORTANTE
 // =======================================================================
@@ -5696,4 +5695,5 @@ spectra and plankton, for autonomous and cabled platforms. Limnol Oceanogr-meth 
 10.1002/lom3.10475
 Florian Ricour. Towards a new insight of the carbon transport in the global ocean. Ocean, Atmosphere.
 Sorbonne Université; Université de Liège, 2023. English. ffNNT: 2023SORUS191ff. fftel04200208f
-`;
+;
+`
