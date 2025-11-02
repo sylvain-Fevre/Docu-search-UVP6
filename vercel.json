@@ -1,19 +1,37 @@
 {
   "redirects": [
     {
-      "source": "https://search.hydroptic.com/(.*)",
+      "source": "/(.*)",
       "destination": "https://uvp6-manual.hydroptic.com/$1",
-      "permanent": true
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "search.hydroptic.com"
+        }
+      ]
     },
     {
-      "source": "https://uvp6-finds.hydroptic.com/(.*)",
+      "source": "/(.*)",
       "destination": "https://uvp6-manual.hydroptic.com/$1",
-      "permanent": true
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "uvp6-finds.hydroptic.com"
+        }
+      ]
     },
     {
-      "source": "https://docu-search-uvp-6-khg8.vercel.app/(.*)",
+      "source": "/(.*)",
       "destination": "https://uvp6-manual.hydroptic.com/$1",
-      "permanent": true
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "docu-search-uvp-6-khg8.vercel.app"
+        }
+      ]
     }
   ]
 }
