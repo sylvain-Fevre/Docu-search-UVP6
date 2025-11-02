@@ -1,15 +1,19 @@
 {
   "redirects": [
     {
-      "source": "/(.*)",
-      "destination": "https://uvp6-finds.hydroptic.com/$1",
-      "permanent": true,
-      "has": [
-        {
-          "type": "host",
-          "value": "uvp6-manual.hydroptic.com"
-        }
-      ]
+      "source": "https://search.hydroptic.com/(.*)",
+      "destination": "https://uvp6-manual.hydroptic.com/$1",
+      "permanent": true
+    },
+    {
+      "source": "https://uvp6-finds.hydroptic.com/(.*)",
+      "destination": "https://uvp6-manual.hydroptic.com/$1",
+      "permanent": true
+    },
+    {
+      "source": "https://docu-search-uvp-6-khg8.vercel.app/(.*)",
+      "destination": "https://uvp6-manual.hydroptic.com/$1",
+      "permanent": true
     }
   ]
 }
